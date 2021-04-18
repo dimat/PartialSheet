@@ -89,38 +89,20 @@ struct PartialSheet: ViewModifier {
     func body(content: Content) -> some View {
         ZStack {
             content
-                // if the device type is an iPhone
-                .iPhone {
-                    $0
-                        .background(
-                            GeometryReader { proxy in
-                                // Add a tracking on the presenter frame
-                                Color.clear.preference(
-                                    key: PresenterPreferenceKey.self,
-                                    value: [PreferenceData(bounds: proxy.frame(in: .global))]
-                                )
-                            }
-                    )
-                    .onPreferenceChange(PresenterPreferenceKey.self, perform: { (prefData) in
-                        self.presenterContentRect = prefData.first?.bounds ?? .zero
-                    })
-            }
-                // if the device type is not an iPhone,
-                // display the sheet content as a normal sheet
-                .iPadOrMac {
-                    $0
-                        .sheet(isPresented: $manager.isPresented, onDismiss: {
-                            self.manager.onDismiss?()
-                        }, content: {
-                            self.iPadAndMacSheet()
-                        })
-            }
-            // if the device type is an iPhone,
-            // display the sheet content as a draggableSheet
-            if deviceType == .iphone {
-                iPhoneSheet()
-                    .edgesIgnoringSafeArea(.vertical)
-            }
+              .background(
+                  GeometryReader { proxy in
+                      // Add a tracking on the presenter frame
+                      Color.clear.preference(
+                          key: PresenterPreferenceKey.self,
+                          value: [PreferenceData(bounds: proxy.frame(in: .global))]
+                      )
+                  }
+                )
+                .onPreferenceChange(PresenterPreferenceKey.self, perform: { (prefData) in
+                    self.presenterContentRect = prefData.first?.bounds ?? .zero
+                })
+            iPhoneSheet()
+              .edgesIgnoringSafeArea(.vertical)
         }
     }
 }
