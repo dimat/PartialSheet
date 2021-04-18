@@ -27,9 +27,6 @@ struct PartialSheet: ViewModifier {
     /// The rect containing the sheet content
     @State private var sheetContentRect: CGRect = .zero
     
-    /// The offset for keyboard height
-    @State private var keyboardOffset: CGFloat = 0
-    
     /// The offset for the drag gesture
     @State private var dragOffset: CGFloat = 0
 
@@ -65,7 +62,7 @@ struct PartialSheet: ViewModifier {
         if self.manager.isPresented {
             // 20.0 = To make sure we dont go under statusbar on screens without safe area inset
             let topInset = UIApplication.shared.windows.first?.safeAreaInsets.top ?? 20.0
-            let position = self.topAnchor + self.dragOffset - self.keyboardOffset
+            let position = self.topAnchor + self.dragOffset
             
             if position < topInset {
                 return topInset
@@ -104,23 +101,6 @@ struct PartialSheet: ViewModifier {
                                 )
                             }
                     )
-                        .onAppear{
-                            let notifier = NotificationCenter.default
-                            let willShow = UIResponder.keyboardWillShowNotification
-                            let willHide = UIResponder.keyboardWillHideNotification
-                            notifier.addObserver(forName: willShow,
-                                                 object: nil,
-                                                 queue: .main,
-                                                 using: self.keyboardShow)
-                            notifier.addObserver(forName: willHide,
-                                                 object: nil,
-                                                 queue: .main,
-                                                 using: self.keyboardHide)
-                    }
-                    .onDisappear {
-                        let notifier = NotificationCenter.default
-                        notifier.removeObserver(self)
-                    }
                     .onPreferenceChange(PresenterPreferenceKey.self, perform: { (prefData) in
                         self.presenterContentRect = prefData.first?.bounds ?? .zero
                     })
@@ -311,28 +291,6 @@ extension PartialSheet {
 
 // MARK: - Keyboard Handlers Methods
 extension PartialSheet {
-
-    /// Add the keyboard offset
-    private func keyboardShow(notification: Notification) {
-        let endFrame = UIResponder.keyboardFrameEndUserInfoKey
-        if let rect: CGRect = notification.userInfo![endFrame] as? CGRect {
-            let height = rect.height
-            let bottomInset = UIApplication.shared.windows.first?.safeAreaInsets.bottom
-            withAnimation(manager.defaultAnimation) {
-                self.keyboardOffset = height - (bottomInset ?? 0)
-            }
-        }
-    }
-
-    /// Remove the keyboard offset
-    private func keyboardHide(notification: Notification) {
-        DispatchQueue.main.async {
-            withAnimation(manager.defaultAnimation) {
-                self.keyboardOffset = 0
-            }
-        }
-    }
-    
     /// Dismiss the keyboard
     private func dismissKeyboard() {
         let resign = #selector(UIResponder.resignFirstResponder)
